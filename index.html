@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trợ lý ảo Lớp học Vui vẻ</title>
+    <style>
+      /* Phông chữ dễ thương cho trẻ em */
+      @import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&display=swap");
+
+      body {
+        font-family: "Baloo 2", cursive;
+        background-color: #f0f8ff; /* AliceBlue */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        color: #333;
+      }
+
+      #game-container {
+        width: 90%;
+        max-width: 500px;
+        background-color: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #header {
+        background-color: #4a90e2; /* CornflowerBlue */
+        color: white;
+        padding: 15px;
+        text-align: center;
+        font-size: 1.5em;
+        font-weight: 700;
+      }
+
+      #score-board {
+        text-align: center;
+        padding: 10px;
+        font-size: 1.2em;
+        background-color: #fdf2b5; /* Light Yellow */
+        font-weight: bold;
+      }
+
+      #chat-area {
+        padding: 20px;
+        height: 300px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .message {
+        max-width: 80%;
+        padding: 12px 18px;
+        border-radius: 18px;
+        line-height: 1.4;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: fadeIn 0.5s ease-in-out;
+      }
+
+      .bot-message {
+        background-color: #e1f5fe; /* LightCyan */
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+      }
+
+      .feedback-message {
+        background-color: #d1f7d5; /* Light Green for correct */
+        font-weight: bold;
+        align-self: center;
+        text-align: center;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .feedback-message.incorrect {
+        background-color: #f7d1d1; /* Light Red for incorrect */
+      }
+
+      .bot-avatar {
+        width: 40px;
+        height: 40px;
+      }
+
+      #options-area {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        border-top: 2px solid #f0f0f0;
+      }
+
+      .option-button {
+        background-color: #ffd700; /* Gold */
+        color: #333;
+        border: none;
+        padding: 15px;
+        border-radius: 12px;
+        font-family: "Baloo 2", cursive;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+        text-align: left;
+        font-weight: bold;
+      }
+
+      .option-button:hover:not(:disabled) {
+        background-color: #fbc531; /* YellowSea */
+        transform: scale(1.02);
+      }
+
+      .option-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      .option-button.correct {
+        background-color: #2ecc71; /* Emerald */
+        color: white;
+      }
+
+      .option-button.incorrect {
+        background-color: #e74c3c; /* Alizarin */
+        color: white;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Chỉnh lại giao diện trên điện thoại */
+      @media (max-width: 600px) {
+        body {
+          height: auto;
+          padding: 10px 0;
+        }
+        #game-container {
+          height: 95vh;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="header">Lớp Học Vui Vẻ</div>
+      <div id="score-board">🌟 Ngôi Sao Chăm Chỉ: 0</div>
+      <div id="chat-area"></div>
+      <div id="options-area"></div>
+    </div>
+
+    <script>
+      const gameData = [
+        {
+          type: "title",
+          text: "Chào mừng đến với Thử thách 1: 👑 NHÀ THÔNG THÁI THỜI GIAN!",
+        },
+        {
+          type: "question",
+          question:
+            "Đã 8 giờ tối, đến giờ bạn Minh ngồi vào bàn học bài theo thời gian biểu. Nhưng trên TV đang chiếu tập phim hoạt hình bạn ấy rất thích. Theo bạn, Minh nên làm gì?",
+          options: [
+            "A. Xem hết phim rồi mới học bài.",
+            "B. Tắt TV, học bài đúng giờ và hẹn xem lại phim vào hôm khác.",
+            "C. Vừa xem TV vừa học bài cho nhanh.",
+          ],
+          correctAnswer: 1,
+          feedback_correct:
+            "Hoan hô! Học bài đúng giờ là một thói quen rất tốt.",
+          feedback_incorrect:
+            "Tiếc quá! Việc học quan trọng hơn, chúng ta nên ưu tiên nhé.",
+        },
+        {
+          type: "question",
+          question:
+            "Hôm nay là Chủ nhật, An dự định 4 giờ chiều sẽ đi đá bóng. Nhưng trời đột nhiên đổ mưa to. An nên làm gì?",
+          options: [
+            "A. Mặc kệ mưa, vẫn đi đá bóng.",
+            "B. Ở nhà phụ giúp bố mẹ việc nhà hoặc đọc sách.",
+            "C. Ngồi khóc vì không được đi chơi.",
+          ],
+          correctAnswer: 1,
+          feedback_correct: "Chính xác! Bạn rất biết cách ứng xử linh hoạt.",
+          feedback_incorrect: "Đi đá bóng khi trời mưa sẽ dễ bị ốm đó bạn ơi!",
+        },
+        {
+          type: "title",
+          text: "Bạn giỏi quá! Giờ là Thử thách 2: 🛡️ HIỆP SĨ NỘI QUY!",
+        },
+        {
+          type: "question",
+          question:
+            "Trong giờ học, bạn Nam thấy bút của mình bị hỏng. Bạn ấy nên làm gì theo nội quy lớp học?",
+          options: [
+            "A. Nói to lên: 'Cô ơi, bút con hỏng rồi!'",
+            "B. Lẳng lặng lấy bút của bạn bên cạnh dùng tạm.",
+            "C. Giơ tay xin phép cô rồi nói nhỏ cho cô biết.",
+          ],
+          correctAnswer: 2,
+          feedback_correct:
+            "Đúng rồi! Giữ trật tự và tôn trọng thầy cô là điều rất quan trọng.",
+          feedback_incorrect:
+            "Ồ! Chúng ta cần giơ tay phát biểu để không làm ảnh hưởng đến cả lớp nhé.",
+        },
+        {
+          type: "question",
+          question:
+            "Sau giờ ăn trưa, Lan thấy vỏ hộp sữa trên bàn. Đây là hành vi đúng hay sai và nên làm gì?",
+          options: [
+            "A. Sai. Lan nên vứt vỏ hộp vào đúng thùng rác quy định.",
+            "B. Đúng. Cứ để đó lát nữa cô lao công sẽ dọn.",
+            "C. Sai. Lan nên ném vỏ hộp ra sân trường.",
+          ],
+          correctAnswer: 0,
+          feedback_correct:
+            "Tuyệt vời! Giữ gìn vệ sinh chung là trách nhiệm của mỗi chúng ta.",
+          feedback_incorrect:
+            "Không đúng rồi! Mỗi người góp một tay thì lớp học mới luôn sạch đẹp được.",
+        },
+        {
+          type: "end",
+          text: "Chúc mừng bạn đã hoàn thành tất cả thử thách! Bạn là một học sinh rất tuyệt vời!",
+        },
+      ];
+
+      const chatArea = document.getElementById("chat-area");
+      const optionsArea = document.getElementById("options-area");
+      const scoreBoard = document.getElementById("score-board");
+
+      let currentQuestionIndex = 0;
+      let score = 0;
+      const botAvatarUrl = "https://api.iconify.design/twemoji/robot.svg"; // URL ảnh robot
+
+      function addBotMessage(text) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message bot-message";
+        messageDiv.innerHTML = `<img src="${botAvatarUrl}" alt="bot" class="bot-avatar"> <p>${text}</p>`;
+        chatArea.appendChild(messageDiv);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+
+      function addFeedbackMessage(text, isCorrect) {
+        const feedbackDiv = document.createElement("div");
+        feedbackDiv.className = "message feedback-message";
+        if (!isCorrect) {
+          feedbackDiv.classList.add("incorrect");
+        }
+        feedbackDiv.innerHTML = `<p>${text}</p>`;
+        chatArea.appendChild(feedbackDiv);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+
+      function displayQuestion() {
+        const currentData = gameData[currentQuestionIndex];
+        optionsArea.innerHTML = ""; // Xóa các nút cũ
+
+        if (currentData.type === "question") {
+          addBotMessage(currentData.question);
+
+          currentData.options.forEach((option, index) => {
+            const button = document.createElement("button");
+            button.className = "option-button";
+            button.innerText = option;
+            button.onclick = () => selectAnswer(index);
+            optionsArea.appendChild(button);
+          });
+        } else if (currentData.type === "title") {
+          addBotMessage(currentData.text);
+          setTimeout(nextQuestion, 2000); // Tự động chuyển sau 2 giây
+        } else if (currentData.type === "end") {
+          addBotMessage(currentData.text);
+          addBotMessage(`Tổng số sao bạn đạt được là: ${score} 🌟. Giỏi quá!`);
+          optionsArea.innerHTML =
+            '<button class="option-button" onclick="startGame()">Chơi lại từ đầu</button>';
+        }
+      }
+
+      function selectAnswer(selectedIndex) {
+        const currentQuestion = gameData[currentQuestionIndex];
+        const buttons = optionsArea.querySelectorAll(".option-button");
+
+        // Vô hiệu hóa tất cả các nút
+        buttons.forEach((button) => (button.disabled = true));
+
+        if (selectedIndex === currentQuestion.correctAnswer) {
+          score++;
+          updateScore();
+          addFeedbackMessage(currentQuestion.feedback_correct, true);
+          buttons[selectedIndex].classList.add("correct");
+        } else {
+          addFeedbackMessage(currentQuestion.feedback_incorrect, false);
+          buttons[selectedIndex].classList.add("incorrect");
+          buttons[currentQuestion.correctAnswer].classList.add("correct");
+        }
+
+        setTimeout(nextQuestion, 3000); // Chờ 3 giây rồi chuyển câu hỏi tiếp theo
+      }
+
+      function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < gameData.length) {
+          displayQuestion();
+        }
+      }
+
+      function updateScore() {
+        scoreBoard.innerText = `🌟 Ngôi Sao Chăm Chỉ: ${score}`;
+      }
+
+      function startGame() {
+        currentQuestionIndex = 0;
+        score = 0;
+        updateScore();
+        chatArea.innerHTML = ""; // Xóa sạch tin nhắn cũ
+
+        // Lời chào ban đầu
+        addBotMessage(
+          "Chào bạn! Tớ là Robot Tin Tin, trợ lý của Lớp học Vui vẻ!"
+        );
+        setTimeout(() => {
+          addBotMessage(
+            "Hôm nay chúng mình cùng chơi một trò chơi để ôn lại bài nhé!"
+          );
+        }, 1500);
+        setTimeout(displayQuestion, 3000);
+      }
+
+      // Bắt đầu trò chơi khi trang được tải
+      window.onload = startGame;
+    </script>
+  </body>
+</html>
